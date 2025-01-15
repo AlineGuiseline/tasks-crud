@@ -1,41 +1,34 @@
 import http from 'http';
-/* import { json } from '../middlewares/json.js'; */
+import { json } from './middlewares/json.js';
+import { Database } from './database.js';
 
-const tasks = []
+const database = new Database();
 
 const server = http.createServer(async (req, res) => {
     const { method, url } = req
 
-    const buffers = []
-
-    for await (const chunk of req) {
-        buffers.push(chunk)
-    }
-
-    try {
-        req.body = JSON.parse(Buffer.concat(buffers).toString())
-    } catch {
-        req.body = null
-    }
+    await json(req, res)
 
     if (method === 'GET' && url === '/tasks') {
-        return res
-        .setHeader('Content-type', 'application/json')
-        .end(JSON.stringify(tasks))
+        const tasks = database.select('tasks')
+
+        return res.end(JSON.stringify(tasks))
     }
     
     if (method === 'POST' && url === '/tasks') {
         const { title, description } = req.body
-        
-        tasks.push({
+
+        const task = {
             id: 1,
             title,
             description,
-        })
+        }
+
+        database.insert('tasks', task)
 
         return res
         .writeHead(201)
-        .end('Tarefa criada')
+        .end()
     }
     return res.end('Hello world');
 });
