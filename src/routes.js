@@ -4,12 +4,26 @@ import { buildRoutePath } from './utils/build-route-path.js';
 
 const database = new Database();
 
+const formatedDate = new Date().toLocaleDateString('pt-br', { 
+    weekday: "short", 
+    year: "numeric", 
+    month: 'short', 
+    day: "2-digit", 
+    hour: "2-digit", 
+    minute: "2-digit"
+})
+
 export const routes = [
     {
         method: 'GET',
         path: buildRoutePath('/tasks'),
         handler: (req, res) => {
-            const tasks = database.select('tasks')
+            const { search } = req.query
+
+            const tasks = database.select('tasks', search ? {
+                title: search,
+                description: search,
+            } : null)
 
             return res
             .end(JSON.stringify(tasks))
@@ -38,8 +52,8 @@ export const routes = [
                 title,
                 description,
                 completed_at: null,
-                created_at: new Date(),
-                updated_at: new Date()
+                created_at: formatedDate,
+                updated_at: formatedDate
             }
     
             database.insert('tasks', task)
@@ -77,9 +91,29 @@ export const routes = [
                 // se title for null ou undefined, mantém o título original (task.title)
                 description: description ?? task.description,
                 // o mesmo vale para description
-                updated_at: new Date()
+                updated_at: formatedDate
                 // atualiza a data de modificação
             })
+            return res.writeHead(204).end()
+        }
+    },
+    {
+        method: 'PATCH',
+        path: buildRoutePath('/tasks/:id'),
+        handler: (req, res) => {
+            const { id } = req.params
+
+            const [task] = database.select('tasks', { id })
+
+            if(!task) {
+                return res.writeHead(404).end()
+            }
+
+            const isTaskCompleted = !!task.completed_at
+            const completed_at = isTaskCompleted ? null : formatedDate
+
+            database.update('tasks', id, { completed_at })
+
             return res.writeHead(204).end()
         }
     },
