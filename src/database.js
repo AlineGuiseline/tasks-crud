@@ -37,6 +37,23 @@ export class Database {
         return data
     }
 
+    update(table, id, data) {
+        // table: nome da tabela (tasks) | id: do item a ser atualizado | data: objeto contendo os novos valores
+        const rowIndex = this.#database[table].findIndex(row => row.id === id)
+        // procura no banco de dados (this.#database[table]) o índice da linha onde id corresponde
+        // ao da tarefa
+    
+        if (rowIndex > -1) {
+            // se encontrou a tarefa (rowIndex > -1), faz a atualização
+            const row = this.#database[table][rowIndex]
+            // pega os dados antigos da tarefa
+            this.#database[table][rowIndex] = { id, ...row, ...data }
+            // cria um novo objeto mesclando: id (mantém o mesmo) | ...row (mantém os dados antigos) | ...data (sobrescreve com os novos dados enviados)
+            this.#persist()
+            // salva as alterações no banco de dados
+        }
+    }
+
     delete(table, id) {
         const rowIndex = this.#database[table].findIndex(row => row.id === id)
     
